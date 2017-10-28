@@ -1,8 +1,8 @@
-/*
- * 
- * 
+/* 
+ * Código exemplo de como controlar dois servos
+ * Usando o controle remoto sem fio 
+ * Esse exemplo usa apelas o stick (analógico) da direita
  * Repositório em:https://github.com/alberiolima/PS2_W
- * 
  */
 
 #include <PS2X_lib.h> 
@@ -71,31 +71,34 @@ void loop() {
 
       lt.startListening();
       
-      if ( ps2x.Analog(PSS_RY)  < 10 ) {
-        iPosiSERVO1 += servoInc1; 
-      } else if ( ps2x.Analog(PSS_RY) > 240  ) {
-        iPosiSERVO1 -= servoInc1; 
+      //Stick direito acionado para cima
+      if ( ps2x.Analog(PSS_RY)  < 10 ) { 
+        if ( iPosiSERVO1 < 178 ) { 
+          iPosiSERVO1 += servoInc1; 
+        }        
       }
       
-      if ( iPosiSERVO1 > 179 ) { 
-        iPosiSERVO1 = 179;
+      //Stick direito acionado para baixo
+      if ( ps2x.Analog(PSS_RY) > 240  ) {
+        if ( iPosiSERVO1 > 0 ) { 
+          iPosiSERVO1 -= servoInc1; 
+       }        
       }
-      if ( iPosiSERVO1 < 0 ) { 
-        iPosiSERVO1 = 0;
-      }
-
+      
+      //Stick direito acionado para esquerda
       if ( ps2x.Analog(PSS_RX)  < 10 ) {
-        iPosiSERVO2 += servoInc2; 
-      } else if ( ps2x.Analog(PSS_RX) > 240  ) {
-        iPosiSERVO2 -= servoInc2;
+        if ( iPosiSERVO2 < 178 ) { 
+         iPosiSERVO2 += servoInc2; 
+        }       
+      } 
+      
+      //Stick direito acionado para direita
+      if ( ps2x.Analog(PSS_RX) > 240  ) {
+        if ( iPosiSERVO2 > 0 ) { 
+          iPosiSERVO2 -= servoInc2;
+        }               
       }
-      if ( iPosiSERVO2 > 179 ) { 
-        iPosiSERVO2 = 179;
-      }
-      if ( iPosiSERVO2 < 0 ) { 
-        iPosiSERVO2 = 0;
-      }
-
+      
       servo1.write( iPosiSERVO1 );
       servo2.write( iPosiSERVO2 );
       
