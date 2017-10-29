@@ -15,14 +15,24 @@
 #define PIN_NRF_PKT  8
 
 #define pinoSERVO1   3
-#define pinoSERVO2   5
+
+#define pin1MOTOR   A0
+#define pin2MOTOR   A1
+#define pinVelMOTOR  5
 
 //Em graus
 #define centroSERVO1 86  //Não é 90 pois o controle retorna123 como centro e não 128
 #define limiteGiro   15  //Limite parao giro das rodas, esse valor corresponde a metade do giro total
 #define correcaoGiro 15  //Corecao quando o servo está mal posicionado
 
+#define incVelocidade   2
+#define maxVelocidade 255
+#define minVelocidade 120
+#define tempoPartida  200
+#define veloPartida   220
+
 int iPosiSERVO1 = 0; //motor
+int iVelocidade = 0;
 
 Servo servo1; 
 Servo servo2; 
@@ -33,9 +43,11 @@ PS2X ps2x;
 
 void setup(){
 
-
   servo1.attach(pinoSERVO1);
-  servo2.attach(pinoSERVO2);
+
+  pinMode( pin1MOTOR, OUTPUT);
+  pinMode( pin2MOTOR, OUTPUT);
+  pinMode( pinVelMOTOR, OUTPUT);
   
   Serial.begin(9600);
 
@@ -70,13 +82,61 @@ void loop() {
         ps2x.buttons = *(uint16_t*)(ps2x.PS2data+3);   //store as one value for multiple functions 
       }     
       lt.startListening();
-      
+
+      //freio
+      if(ps2x.NewButtonState(PSB_CROSS)) {
+        if (ps2x.ButtonPressed(PSB_CROSS) ) {
+          iVelocidade = 0;
+          digitalWrite( pinVelMOTOR, HIGH );
+          digitalWrite( pin1MOTOR, HIGH );
+          digitalWrite( pin2MOTOR, HIGH );  
+        } else if (ps2x.ButtonReleased(PSB_CROSS)) {
+          analogWrite( pinVelMOTOR, 0 );
+          digitalWrite( pin1MOTOR, LOW );
+          digitalWrite( pin2MOTOR, LOW );
+        }
+      } else if(ps2x.NewButtonState(PSB_CIRCLE)) { //Banguela
+        if (ps2x.ButtonPressed(PSB_CIRCLE) ) {
+          digitalWrite( pin1MOTOR, LOW );
+          digitalWrite( pin2MOTOR, LOW );          
+        }
+      } else { //Velocidade
+        if ( ps2x.Analog(PSS_LY) > 240 ) { 
+          if ( iVelocidade == 0 ) {
+            iVelocidade = minVelocidade * -1;
+          }
+          iVelocidade -= incVelocidade;
+          if ( iVelocidade < maxVelocidade * -1 ){
+            iVelocidade = maxVelocidade * -1;
+          }
+        } else if ( ps2x.Analog(PSS_LY) < 15 ) {
+          if ( iVelocidade == 0 ) {
+            iVelocidade = minVelocidade;
+          }          
+          iVelocidade += incVelocidade;
+          if ( iVelocidade > maxVelocidade ){
+            iVelocidade = maxVelocidade;
+          }
+        }
+        if ( iVelocidade < 0 ) {
+          digitalWrite( pin1MOTOR, LOW );
+          digitalWrite( pin2MOTOR, HIGH ); 
+          analogWrite( pinVelMOTOR, iVelocidade * -1 );
+        } else {          
+          digitalWrite( pin1MOTOR, HIGH ); 
+          digitalWrite( pin2MOTOR, LOW );           
+          analogWrite( pinVelMOTOR, iVelocidade );
+          if ( iVelocidade == minVelocidade + incVelocidade ) {
+            analogWrite( pinVelMOTOR, veloPartida );
+            delay(tempoPartida);
+          }          
+        }
+      }
+
       //direcao       
       int iDirecao = map( ps2x.Analog(PSS_RX), 0, 255, centroSERVO1 - limiteGiro, centroSERVO1 + limiteGiro ); //Converte leitura analógica para graus
       iDirecao += correcaoGiro; //Correção do giro, caso o servo esteja num local que não permita correção mecânica/manual
       servo1.write( iDirecao ); //direcao
-      
-      //servo2.write( map( ps2x.Analog(PSS_LY), 0, 255, 0, 179 ) ); //motor
             
     }  
 }
