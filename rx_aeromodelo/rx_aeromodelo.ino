@@ -21,7 +21,10 @@
 #define pinoSERVO5  10
 #define pinoSERVO6  11
 
-int iPosiSERVO3 = 0; //motor
+#define accIncremento     1
+#define limiteAceleracao  179
+
+byte iPosiSERVO3 = 0; //motor
 
 Servo servo1; 
 Servo servo2; 
@@ -59,6 +62,12 @@ void setup(){
   lt.setChannel(0x06);
 
   lt.startListening();  
+  servo3.write(0);
+  delay(10);
+  servo3.write(179);
+  delay(10);
+  servo3.write(179);
+  servo3.write(0);
 
 }
 
@@ -78,11 +87,26 @@ void loop() {
       }     
 
       lt.startListening();
-
+      //Aceleração feita por PSS_LY
+      if ( ps2x.Analog(PSS_LY) < 20 ) { //Acelera
+        if ( iPosiSERVO3 + accIncremento > limiteAceleracao ) {
+          iPosiSERVO3 = limiteAceleracao;
+        } else {
+          iPosiSERVO3 += accIncremento;
+        }        
+      } else if ( ps2x.Analog(PSS_LY) > 235 ) { //Desacelera
+        if ( iPosiSERVO3 - accIncremento < 0 ) {
+          iPosiSERVO3 = 0;
+        } else {
+          iPosiSERVO3 -= accIncremento;
+        }
+      }
+      
       servo1.write( map( ps2x.Analog(PSS_RX), 0, 255, 0, 179 ) ); //aileron
       servo2.write( map( ps2x.Analog(PSS_RY), 0, 255, 0, 179 ) ); //profundor
-      //servo3.write( map( ps2x.Analog(PSS_LY), 0, 255, 0, 179 ) ); //motor
+      servo3.write( iPosiSERVO3 ); //motor
       //servo4.write( map( ps2x.Analog(PSS_LX), 0, 255, 0, 179 ) ); //leme
+      Serial.println( iPosiSERVO3 );
       
     }  
 }
