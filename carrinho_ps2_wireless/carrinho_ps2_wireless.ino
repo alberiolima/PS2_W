@@ -3,8 +3,8 @@
 //Pinos do arduino para a placa receptora do controle PS2
 #define PS2_DAT        11 //DI
 #define PS2_CMD        10 //D0
-#define PS2_SEL         9 //CS
-#define PS2_CLK         8 //CLK
+#define PS2_SEL         8 //CS
+#define PS2_CLK         9 //CLK
 
 //Pinos de sentido da rotação dos motors
 #define pinoMotor1A A0
